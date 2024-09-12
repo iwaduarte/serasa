@@ -1,10 +1,10 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import sequelize from "./database/connection";
-import userRoutes from "./routes/userRoutes";
-import "../dotenv.ts";
-import { requestLogger } from "./middleware/logger";
+import sequelize from "./database/connect.js";
+import userRoutes from "./routes/userRoutes.js";
+import "./dotenv.js";
+import { requestLogger } from "./middleware/logger.js";
 
 const { PORT: envPORT } = process.env;
 const PORT = envPORT || 3000;
@@ -23,6 +23,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 app.use(requestLogger);
-app.use("/api/users", userRoutes);
+app.get("/", (req: Request, res: Response) =>
+  res.send("I am doing fine. Thanks for asking"),
+);
+app.use("/users", userRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
