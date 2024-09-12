@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/app.js",
     "build": "swc src -d dist",
-    "dev": "swc src --watch -d dist & nodemon dist/server.js",
+    "watch": "swc src --watch -d dist",
+    "dev": "nodemon dist/src/app.js",
     "typecheck": "tsc",
-    "check-and-build": "npm run typecheck && npm run build"
+    "check-and-build": "npm run typecheck && npm run build",
+    "sync": "node dist/src/database/sync.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
   },
   "keywords": [],
   "author": "",
