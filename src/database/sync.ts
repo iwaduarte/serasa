@@ -1,4 +1,6 @@
-import sequelize from "./connection";
+import SequelizeObject from "./connect.js";
+
+const { sequelize } = SequelizeObject;
 
 sequelize
   .sync({ alter: true })
