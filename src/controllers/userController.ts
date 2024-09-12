@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
-import User, { verifyPassword } from "../database/models/userModel";
+import { verifyPassword } from "../database/models/userModel.js";
+import SequelizeObject from "../database/connect.js";
 import jwt from "jsonwebtoken";
+
+const {
+  models: { User },
+} = SequelizeObject;
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
@@ -11,8 +16,15 @@ interface AuthRequest extends Request {
 // Register new user
 export const register = async (req: Request, res: Response) => {
   const { username, password, email } = req.body;
-  const [response, error] = await User.create({ username, password, email })
-    .then(({ username, email }) => [null, { email, username }])
+
+  if (!username || !password || !email)
+    return res.status(400).json("Invalid credentials");
+
+  const [error, response] = await User.create({ username, password, email })
+    .then((user) => {
+      const { email, username } = user as any;
+      return [null, { email, username }];
+    })
     .catch((error) => {
       console.log(error);
       return [{ message: "Error registering user" }, null];
@@ -25,7 +37,7 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
   try {
-    const user = await User.findOne({ where: { username } });
+    const user = (await User.findOne({ where: { username } })) as any;
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }

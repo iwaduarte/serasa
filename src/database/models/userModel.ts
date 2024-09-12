@@ -1,6 +1,7 @@
-import { DataTypes, Model } from "sequelize";
 import crypto from "crypto";
-import sequelize from "../connection";
+import { DataTypes, Model, ModelDefined, Sequelize } from "sequelize";
+import { UserAttributes, UserCreationAttributes } from "./types.js";
+
 const SALT_LENGTH = 16;
 
 const hashPassword = (password: string): Promise<string> => {
@@ -23,46 +24,45 @@ const verifyPassword = (password: string, hash: string): Promise<boolean> => {
   });
 };
 
-class User extends Model {
-  public id!: number;
-  public username!: string;
-  public password!: string;
-  public email!: string;
-}
-
-User.init(
-  {
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+const User = (
+  sequelize: Sequelize,
+  dataTypes: typeof DataTypes,
+): ModelDefined<UserAttributes, UserCreationAttributes> => {
+  return sequelize.define(
+    "User",
+    {
+      username: {
+        type: dataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      email: {
+        type: dataTypes.STRING,
+        allowNull: false,
+      },
+      password: {
+        type: dataTypes.STRING,
+        allowNull: false,
+      },
     },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  },
-  {
-    sequelize,
-    modelName: "User",
-  },
-);
+    {
+      hooks: {
+        // Before creating the user, hash the password
+        beforeCreate: async (user: Record<any, any>) => {
+          user.password = await hashPassword(user.password);
+        },
 
-User.beforeCreate(async (data: User) => {
-  const password = await hashPassword(data.password);
-  Object.assign(data, { password });
-});
-
-User.beforeUpdate(async (data: User) => {
-  if (data.password && data.changed("password")) {
-    const password = await hashPassword(data.password);
-    Object.assign(data, { password });
-  }
-});
+        // Before updating the user, if password is changed, hash the password
+        beforeUpdate: async (user: Record<string, any>) => {
+          if (user.changed("password")) {
+            user.password = await hashPassword(user.password);
+          }
+        },
+      },
+    },
+  );
+};
 
 export default User;
+
 export { verifyPassword, hashPassword };
